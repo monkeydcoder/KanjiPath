@@ -2,6 +2,8 @@ import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Learn from "./pages/Learn";
+import Vocabulary from "./pages/Vocabulary";
+import Grammar from "./pages/Grammar";
 import Revise from "./pages/Revise";
 import Test from "./pages/Test";
 import Flashcards from "./pages/Flashcards";
@@ -13,6 +15,8 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/learn" element={<Learn />} />
+        <Route path="/vocabulary" element={<Vocabulary />} />
+        <Route path="/grammar" element={<Grammar />} />
         <Route path="/revise" element={<Revise />} />
         <Route path="/test" element={<Test />} />
         <Route path="/flashcards" element={<Flashcards />} />

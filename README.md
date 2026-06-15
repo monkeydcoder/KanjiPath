@@ -28,6 +28,10 @@ To create a production build: `npm run build` (output in `dist/`, previewable wi
   to the back of the deck until you know them.
 - **Sentence practice** — read every kanji in a real sentence with toggleable
   furigana and tap-to-reveal translations.
+- **Vocabulary** — essential N5 & N4 words grouped by topic, with a practice mode
+  that hides meanings.
+- **Grammar** — ~100 bite-size N5/N4 grammar lessons sorted by ★ priority, with
+  topic filters and a slide-in detail panel (pattern, examples, common traps).
 - **N5 / N4 switch** — global level toggle in the header; progress is tracked
   separately per kanji and saved to `localStorage` automatically.
 
@@ -40,12 +44,18 @@ src/
     n5.js            all 80 N5 kanji in a structured learning order
     n4-part1..3.js   all 167 N4 kanji, ordered by usefulness
     index.js         LEVELS registry — add future levels (N3…) here
+    vocab.js         N5 & N4 vocabulary grouped by topic
+    grammarFactory.js  G() constructor + GRAMMAR_TOPICS registry
+    grammar-n5.js / grammar-n4.js  grammar lessons per level
+    grammar.js       combines levels + helpers (grammarForLevel, …)
   context/
     StudyContext.jsx global state: current level, learned set, quiz history
                      (persisted to localStorage)
-  components/        reusable UI (Layout, KanjiDetail, Furigana, Modal, …)
-  pages/             one file per route (Dashboard, Learn, Revise, Test,
-                     Flashcards, Sentences)
+    ThemeContext.jsx light/dark theme, persisted to localStorage
+  components/        reusable UI (Layout, KanjiDetail, GrammarDetail,
+                     DetailDrawer, PriorityStars, Furigana, …)
+  pages/             one file per route (Dashboard, Learn, Vocabulary,
+                     Grammar, Revise, Test, Flashcards, Sentences)
   utils.js           accent color maps, shuffle/sample helpers
 ```
 
@@ -55,6 +65,14 @@ src/
    (see `src/data/kanjiFactory.js` for the field documentation).
 2. Register the level in `src/data/index.js` with a title and accent color.
 3. Done — every page (Learn, Test, Flashcards, …) picks it up automatically.
+
+## Adding grammar lessons
+
+1. Add a `G(...)` entry to `src/data/grammar-n5.js` or `grammar-n4.js`
+   (see `grammarFactory.js` for the field order and `GRAMMAR_TOPICS` for valid
+   topic ids).
+2. Set its `priority` (3 = ★★★ essential, 2 = ★★, 1 = ★) — the Grammar page
+   sorts and groups by it automatically.
 
 ## Tech stack
 

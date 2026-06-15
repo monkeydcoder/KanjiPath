@@ -9,7 +9,7 @@ export default function Furigana({ parts, showFurigana = true, highlight }) {
     <span className="font-jp leading-loose">
       {parts.map(([text, reading], i) => {
         const isTarget = highlight && text.includes(highlight);
-        const cls = isTarget ? "font-bold text-emerald-700" : undefined;
+        const cls = isTarget ? "font-bold text-emerald-700 dark:text-emerald-400" : undefined;
         if (reading && showFurigana) {
           return (
             <ruby key={i} className={cls}>

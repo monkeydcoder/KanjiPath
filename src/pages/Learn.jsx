@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useStudy } from "../context/StudyContext";
 import { ACCENTS } from "../utils";
 import KanjiDetail from "../components/KanjiDetail";
-import Modal from "../components/Modal";
+import DetailDrawer from "../components/DetailDrawer";
 import ProgressBar from "../components/ProgressBar";
 
 const FILTERS = [
@@ -35,19 +35,23 @@ export default function Learn() {
 
   const learnedCount = levelData.kanji.filter((k) => learnedSet.has(k.char)).length;
   const open = openIndex !== null ? visible[openIndex] : null;
+  const goPrev = () => setOpenIndex((i) => (i > 0 ? i - 1 : i));
+  const goNext = () => setOpenIndex((i) => (i < visible.length - 1 ? i + 1 : i));
 
   return (
     <div className="rise-in">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Learn · {levelData.title}</h1>
-          <p className="mt-1 text-sm text-stone-500">
+          <h1 className="font-display text-3xl font-bold tracking-tight">
+            Learn <span className={accent.text}>· {levelData.title}</span>
+          </h1>
+          <p className="mt-1 text-sm text-stone-500 dark:text-night-mute">
             Tap a kanji to see its readings, words and an example sentence.
           </p>
         </div>
         <div className="w-full sm:w-56">
           <ProgressBar value={learnedCount} max={levelData.kanji.length} barClass={accent.bar} />
-          <p className="mt-1.5 text-xs font-medium text-stone-500">
+          <p className="mt-1.5 text-xs font-semibold text-stone-500 [font-variant-numeric:tabular-nums] dark:text-night-mute">
             {learnedCount} / {levelData.kanji.length} learned
           </p>
         </div>
@@ -59,25 +63,30 @@ export default function Learn() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search kanji, meaning or reading…"
-          className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm shadow-sm outline-none focus:border-stone-400 sm:max-w-xs"
+          className="input-base w-full sm:max-w-xs"
         />
-        <div className="flex rounded-xl bg-stone-100 p-1 text-sm font-medium">
+        <div className="flex rounded-2xl bg-stone-200/60 p-1 text-sm font-semibold dark:bg-night-soft">
           {FILTERS.map((f) => (
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
-              className={`flex-1 rounded-lg px-4 py-1.5 transition-colors sm:flex-none ${
-                filter === f.id ? "bg-white text-ink shadow-sm" : "text-stone-500"
+              className={`flex-1 rounded-xl px-4 py-1.5 transition-all duration-200 active:scale-95 sm:flex-none ${
+                filter === f.id
+                  ? "bg-card text-ink shadow-sm dark:bg-night dark:text-stone-100"
+                  : "text-stone-500 hover:text-stone-700 dark:text-night-mute dark:hover:text-stone-300"
               }`}
             >
               {f.label}
             </button>
           ))}
         </div>
+        <span className="text-xs font-semibold text-stone-400 [font-variant-numeric:tabular-nums] dark:text-night-mute sm:ml-auto">
+          {visible.length} kanji shown
+        </span>
       </div>
 
       {visible.length === 0 ? (
-        <p className="mt-10 text-center text-sm text-stone-500">
+        <p className="mt-10 text-center text-sm text-stone-500 dark:text-night-mute">
           No kanji match — try a different search or filter.
         </p>
       ) : (
@@ -88,17 +97,21 @@ export default function Learn() {
               <button
                 key={kanji.char}
                 onClick={() => setOpenIndex(i)}
-                className={`relative flex aspect-square flex-col items-center justify-center rounded-2xl border bg-white shadow-card transition-all hover:-translate-y-0.5 ${
-                  learned ? `${accent.border} ${accent.soft}` : "border-stone-200"
+                className={`group relative flex aspect-square flex-col items-center justify-center rounded-2xl border shadow-soft transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lift hover:ring-2 active:scale-95 ${accent.ring} ${
+                  learned
+                    ? `${accent.border} ${accent.soft}`
+                    : "border-line bg-card dark:border-night-line dark:bg-night-card"
                 }`}
               >
                 {learned && (
-                  <span className={`absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full text-[10px] font-bold text-white ${accent.solid}`}>
+                  <span
+                    className={`absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full text-[10px] font-bold text-white ${accent.solid}`}
+                  >
                     ✓
                   </span>
                 )}
-                <span className="font-jp text-3xl font-bold sm:text-4xl">{kanji.char}</span>
-                <span className="mt-1 w-full truncate px-1 text-center text-[10px] font-medium text-stone-500">
+                <span className="font-kanji text-3xl font-bold sm:text-4xl">{kanji.char}</span>
+                <span className="mt-1 w-full truncate px-1 text-center text-[10px] font-medium text-stone-500 dark:text-night-mute">
                   {kanji.meaning.split(";")[0]}
                 </span>
               </button>
@@ -108,28 +121,31 @@ export default function Learn() {
       )}
 
       {open && (
-        <Modal onClose={() => setOpenIndex(null)}>
+        <DetailDrawer
+          title={`${open.char} · ${openIndex + 1} / ${visible.length} · ${levelData.title}`}
+          onClose={() => setOpenIndex(null)}
+          onPrev={goPrev}
+          onNext={goNext}
+          footer={
+            <div className="flex items-center justify-between">
+              <button onClick={goPrev} disabled={openIndex === 0} className="btn-soft">
+                ← Prev
+              </button>
+              <span className="hidden text-xs font-semibold text-stone-400 dark:text-night-mute sm:inline">
+                ← → keys work too
+              </span>
+              <button
+                onClick={goNext}
+                disabled={openIndex === visible.length - 1}
+                className={`btn-grad px-5 py-2 ${accent.grad} ${accent.gradHover}`}
+              >
+                Next →
+              </button>
+            </div>
+          }
+        >
           <KanjiDetail kanji={open} />
-          <div className="mt-6 flex justify-between border-t border-stone-100 pt-4">
-            <button
-              onClick={() => setOpenIndex((i) => Math.max(0, i - 1))}
-              disabled={openIndex === 0}
-              className="rounded-full bg-stone-100 px-5 py-2 text-sm font-semibold text-stone-700 disabled:opacity-40"
-            >
-              ← Previous
-            </button>
-            <span className="self-center text-xs font-medium text-stone-400">
-              {openIndex + 1} / {visible.length}
-            </span>
-            <button
-              onClick={() => setOpenIndex((i) => Math.min(visible.length - 1, i + 1))}
-              disabled={openIndex === visible.length - 1}
-              className="rounded-full bg-stone-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-40"
-            >
-              Next →
-            </button>
-          </div>
-        </Modal>
+        </DetailDrawer>
       )}
     </div>
   );

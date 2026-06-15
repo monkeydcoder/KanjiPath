@@ -44,26 +44,30 @@ export default function Revise() {
 
   return (
     <div className="rise-in mx-auto max-w-xl">
-      <div className="flex items-end justify-between">
+      <div className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Revise · {levelData.title}</h1>
-          <p className="mt-1 text-sm text-stone-500">
+          <h1 className="font-display text-3xl font-bold tracking-tight">
+            Revise <span className={accent.text}>· {levelData.title}</span>
+          </h1>
+          <p className="mt-1 text-sm text-stone-500 dark:text-night-mute">
             Step through your learned kanji. Use ← → arrow keys too.
           </p>
         </div>
-        <span className="text-sm font-semibold text-stone-400">
+        <span className="shrink-0 rounded-full bg-stone-200/60 px-3 py-1 text-xs font-bold text-stone-500 [font-variant-numeric:tabular-nums] dark:bg-night-soft dark:text-night-mute">
           {index + 1} / {learned.length}
         </span>
       </div>
 
       {/* Quick-jump strip */}
-      <div className="mt-4 flex gap-1.5 overflow-x-auto pb-2">
+      <div className="fade-x nice-scroll mt-4 flex gap-1.5 overflow-x-auto px-1 pb-2 pt-1">
         {learned.map((kanji, i) => (
           <button
             key={kanji.char}
             onClick={() => setIndex(i)}
-            className={`shrink-0 rounded-lg px-2.5 py-1.5 font-jp text-base transition-colors ${
-              i === index ? `${accent.solid} text-white` : "bg-white text-stone-600 shadow-sm hover:bg-stone-100"
+            className={`shrink-0 rounded-xl px-2.5 py-1.5 font-kanji text-base transition-all duration-200 active:scale-90 ${
+              i === index
+                ? `${accent.grad} text-white shadow-sm`
+                : "bg-card text-stone-600 shadow-sm hover:-translate-y-0.5 hover:shadow-soft dark:bg-night-card dark:text-stone-300"
             }`}
           >
             {kanji.char}
@@ -71,7 +75,7 @@ export default function Revise() {
         ))}
       </div>
 
-      <div className="mt-4 rounded-3xl border border-stone-200 bg-white p-6 shadow-card">
+      <div className="card mt-4 p-6">
         <KanjiDetail kanji={current} />
       </div>
 
@@ -79,14 +83,14 @@ export default function Revise() {
         <button
           onClick={() => setIndex((i) => Math.max(0, i - 1))}
           disabled={index === 0}
-          className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-stone-700 shadow-card disabled:opacity-40"
+          className="btn-soft px-6 py-2.5"
         >
           ← Previous
         </button>
         <button
           onClick={() => setIndex((i) => Math.min(learned.length - 1, i + 1))}
           disabled={index === learned.length - 1}
-          className={`rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-card disabled:opacity-40 ${accent.solid} ${accent.solidHover}`}
+          className={`btn-grad px-6 py-2.5 ${accent.grad} ${accent.gradHover}`}
         >
           Next →
         </button>
