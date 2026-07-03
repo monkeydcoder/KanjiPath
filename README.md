@@ -1,8 +1,12 @@
 # 漢 KanjiPath
 
-A clean, beginner-friendly web app for learning **JLPT N5 and N4 kanji** — all 80 N5
-kanji and all 167 N4 kanji, each with onyomi/kunyomi readings, English meanings,
-example words, and a simple example sentence with furigana.
+A clean, beginner-friendly web app for learning **JLPT N5 and N4 Japanese** — 247 kanji,
+500+ vocabulary words, and ~100 grammar patterns, all with readings, meanings,
+example sentences, spaced repetition, quizzes, and audio pronunciation.
+
+<p align="center">
+  <img src="preview.gif" alt="KanjiPath walkthrough – Dashboard, Learn, Kanji detail, Vocabulary, Grammar, Test, Flashcards, Sentences" width="720" />
+</p>
 
 ## Getting started
 
@@ -11,7 +15,7 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:5173.
+Then open http://localhost:5176 (or whichever port Vite assigns).
 
 To create a production build: `npm run build` (output in `dist/`, previewable with
 `npm run preview`).
