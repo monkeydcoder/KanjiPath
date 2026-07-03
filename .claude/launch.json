@@ -4,8 +4,14 @@
     {
       "name": "kanjipath",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5174"],
-      "port": 5174
+      "runtimeArgs": ["run", "dev", "--", "--port", "5176"],
+      "port": 5176
+    },
+    {
+      "name": "portfolio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "/Users/satyam/Desktop/New_Portfolio", "--", "--port", "5175"],
+      "port": 5175
     }
   ]
 }
