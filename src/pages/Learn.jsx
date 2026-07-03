@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useStudy } from "../context/StudyContext";
 import { ACCENTS } from "../utils";
+import { romajiToHiragana, hiraganaToKatakana } from "../romaji";
 import KanjiDetail from "../components/KanjiDetail";
 import DetailDrawer from "../components/DetailDrawer";
 import ProgressBar from "../components/ProgressBar";
@@ -16,10 +17,15 @@ export default function Learn() {
   const accent = ACCENTS[levelData.accent];
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
-  const [openIndex, setOpenIndex] = useState(null);
+  // The drawer freezes its own browsing order when opened. Tracking an index
+  // into the live filtered list would make the open card jump or vanish when
+  // marking a kanji learned under the "To learn" filter.
+  const [drawer, setDrawer] = useState(null); // { chars: string[], index: number }
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const hira = q ? romajiToHiragana(q) : "";
+    const kata = hira ? hiraganaToKatakana(hira) : "";
     return levelData.kanji.filter((k) => {
       if (filter === "learned" && !learnedSet.has(k.char)) return false;
       if (filter === "todo" && learnedSet.has(k.char)) return false;
@@ -28,15 +34,19 @@ export default function Learn() {
         k.char.includes(q) ||
         k.meaning.toLowerCase().includes(q) ||
         k.on.includes(query) ||
-        k.kun.includes(query)
+        k.kun.includes(query) ||
+        (hira !== "" && (k.kun.includes(hira) || k.on.includes(kata)))
       );
     });
   }, [levelData, learnedSet, query, filter]);
 
   const learnedCount = levelData.kanji.filter((k) => learnedSet.has(k.char)).length;
-  const open = openIndex !== null ? visible[openIndex] : null;
-  const goPrev = () => setOpenIndex((i) => (i > 0 ? i - 1 : i));
-  const goNext = () => setOpenIndex((i) => (i < visible.length - 1 ? i + 1 : i));
+  const open = drawer
+    ? levelData.kanji.find((k) => k.char === drawer.chars[drawer.index])
+    : null;
+  const goPrev = () => setDrawer((d) => (d && d.index > 0 ? { ...d, index: d.index - 1 } : d));
+  const goNext = () =>
+    setDrawer((d) => (d && d.index < d.chars.length - 1 ? { ...d, index: d.index + 1 } : d));
 
   return (
     <div className="rise-in">
@@ -62,7 +72,7 @@ export default function Learn() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search kanji, meaning or reading…"
+          placeholder="Search kanji, meaning, kana or romaji…"
           className="input-base w-full sm:max-w-xs"
         />
         <div className="flex rounded-2xl bg-stone-200/60 p-1 text-sm font-semibold dark:bg-night-soft">
@@ -96,7 +106,7 @@ export default function Learn() {
             return (
               <button
                 key={kanji.char}
-                onClick={() => setOpenIndex(i)}
+                onClick={() => setDrawer({ chars: visible.map((v) => v.char), index: i })}
                 className={`group relative flex aspect-square flex-col items-center justify-center rounded-2xl border shadow-soft transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lift hover:ring-2 active:scale-95 ${accent.ring} ${
                   learned
                     ? `${accent.border} ${accent.soft}`
@@ -120,15 +130,15 @@ export default function Learn() {
         </div>
       )}
 
-      {open && (
+      {drawer && open && (
         <DetailDrawer
-          title={`${open.char} · ${openIndex + 1} / ${visible.length} · ${levelData.title}`}
-          onClose={() => setOpenIndex(null)}
+          title={`${open.char} · ${drawer.index + 1} / ${drawer.chars.length} · ${levelData.title}`}
+          onClose={() => setDrawer(null)}
           onPrev={goPrev}
           onNext={goNext}
           footer={
             <div className="flex items-center justify-between">
-              <button onClick={goPrev} disabled={openIndex === 0} className="btn-soft">
+              <button onClick={goPrev} disabled={drawer.index === 0} className="btn-soft">
                 ← Prev
               </button>
               <span className="hidden text-xs font-semibold text-stone-400 dark:text-night-mute sm:inline">
@@ -136,7 +146,7 @@ export default function Learn() {
               </span>
               <button
                 onClick={goNext}
-                disabled={openIndex === visible.length - 1}
+                disabled={drawer.index === drawer.chars.length - 1}
                 className={`btn-grad px-5 py-2 ${accent.grad} ${accent.gradHover}`}
               >
                 Next →

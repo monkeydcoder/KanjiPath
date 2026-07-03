@@ -490,3 +490,10 @@ export const VOCAB_CATEGORIES = [
 export function vocabCountForLevel(level) {
   return VOCAB_CATEGORIES.reduce((sum, c) => sum + c.words[level].length, 0);
 }
+
+/** Every word of a level flattened, tagged with its topic (for tests, decks, SRS). */
+export function vocabPoolForLevel(level) {
+  return VOCAB_CATEGORIES.flatMap((c) =>
+    c.words[level].map((w) => ({ ...w, topic: c.title, emoji: c.emoji }))
+  );
+}

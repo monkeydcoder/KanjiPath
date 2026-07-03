@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { useStudy } from "../context/StudyContext";
 import { VOCAB_CATEGORIES, vocabCountForLevel } from "../data/vocab";
 import { ACCENTS } from "../utils";
+import { romajiToHiragana } from "../romaji";
+import SpeakButton from "../components/SpeakButton";
 
 function WordCard({ word, emoji, practice }) {
   const [revealed, setRevealed] = useState(false);
@@ -9,11 +11,13 @@ function WordCard({ word, emoji, practice }) {
   const hasReading = word.r !== word.jp;
 
   return (
-    <button
-      type="button"
+    <div
+      role={practice ? "button" : undefined}
+      tabIndex={practice ? 0 : undefined}
       onClick={() => practice && setRevealed((r) => !r)}
+      onKeyDown={(e) => practice && (e.key === "Enter" || e.key === " ") && setRevealed((r) => !r)}
       className={`card flex items-start gap-3 p-4 text-left transition-all duration-200 ${
-        practice ? "card-hover cursor-pointer active:scale-[0.98]" : "cursor-default"
+        practice ? "card-hover cursor-pointer active:scale-[0.98]" : ""
       }`}
     >
       <span
@@ -22,7 +26,7 @@ function WordCard({ word, emoji, practice }) {
       >
         {emoji}
       </span>
-      <span className="min-w-0">
+      <span className="min-w-0 flex-1">
         <span className="block font-jp text-lg font-bold leading-snug">{word.jp}</span>
         {hasReading && (
           <span className="block font-jp text-sm text-stone-500 dark:text-night-mute">{word.r}</span>
@@ -35,7 +39,8 @@ function WordCard({ word, emoji, practice }) {
           {hidden ? "tap to reveal" : word.en}
         </span>
       </span>
-    </button>
+      <SpeakButton text={word.r} className="mt-0.5" />
+    </div>
   );
 }
 
@@ -48,6 +53,7 @@ export default function Vocabulary() {
 
   const sections = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const hira = q ? romajiToHiragana(q) : "";
     return VOCAB_CATEGORIES
       .filter((c) => category === "all" || c.id === category)
       .map((c) => ({
@@ -57,7 +63,8 @@ export default function Vocabulary() {
             !q ||
             w.jp.includes(q) ||
             w.r.includes(q) ||
-            w.en.toLowerCase().includes(q)
+            w.en.toLowerCase().includes(q) ||
+            (hira !== "" && (w.r.includes(hira) || w.jp.includes(hira)))
         ),
       }))
       .filter((c) => c.list.length > 0);
@@ -93,7 +100,7 @@ export default function Vocabulary() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search a word in Japanese, kana or English…"
+          placeholder="Search in Japanese, kana, romaji or English…"
           className="input-base w-full sm:max-w-sm"
         />
         <div className="fade-x nice-scroll flex gap-2 overflow-x-auto px-1 pb-2 pt-1">

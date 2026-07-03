@@ -1,7 +1,9 @@
+import { useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useStudy } from "../context/StudyContext";
 import { LEVELS, LEVEL_IDS } from "../data";
-import { ACCENTS, formatDate } from "../utils";
+import { vocabPoolForLevel } from "../data/vocab";
+import { ACCENTS, computeStreak, formatDate, localDateKey } from "../utils";
 import ProgressBar from "../components/ProgressBar";
 
 const MODES = [
@@ -9,14 +11,16 @@ const MODES = [
   { to: "/vocabulary", emoji: "🗂️", title: "Vocabulary", desc: "Essential N5 & N4 words, organized by topic", tint: "bg-amber-50 dark:bg-amber-950/30" },
   { to: "/grammar", emoji: "📐", title: "Grammar", desc: "Bite-size N5 & N4 grammar, by priority", tint: "bg-teal-50 dark:bg-teal-950/40" },
   { to: "/revise", emoji: "🔁", title: "Revise", desc: "Step back through everything you've learned", tint: "bg-sky-50 dark:bg-sky-950/40" },
-  { to: "/flashcards", emoji: "🃏", title: "Flashcards", desc: "Flip cards to lock readings into memory", tint: "bg-violet-50 dark:bg-violet-950/40" },
-  { to: "/test", emoji: "✅", title: "Test", desc: "Quiz yourself on meanings and readings", tint: "bg-rose-50 dark:bg-rose-950/30" },
+  { to: "/flashcards", emoji: "🃏", title: "Flashcards", desc: "Spaced-repetition cards for kanji and vocab", tint: "bg-violet-50 dark:bg-violet-950/40" },
+  { to: "/test", emoji: "✅", title: "Test", desc: "Quiz yourself on kanji, vocabulary and grammar", tint: "bg-rose-50 dark:bg-rose-950/30" },
   { to: "/sentences", emoji: "⛩️", title: "Sentences", desc: "Read your kanji in real context, with furigana", tint: "bg-indigo-50 dark:bg-indigo-950/40" },
 ];
 
-function Stat({ value, label, emoji, tint }) {
-  return (
-    <div className="card flex items-center gap-3.5 px-4 py-4">
+const KIND_LABELS = { vocab: "Vocab", grammar: "Grammar" };
+
+function Stat({ value, label, emoji, tint, to }) {
+  const body = (
+    <>
       <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-xl ${tint}`}>
         {emoji}
       </span>
@@ -26,18 +30,118 @@ function Stat({ value, label, emoji, tint }) {
         </div>
         <div className="mt-1 text-xs font-medium text-stone-500 dark:text-night-mute">{label}</div>
       </div>
-    </div>
+    </>
+  );
+  if (to) {
+    return (
+      <Link to={to} className="card card-hover flex items-center gap-3.5 px-4 py-4 active:scale-[0.98]">
+        {body}
+      </Link>
+    );
+  }
+  return <div className="card flex items-center gap-3.5 px-4 py-4">{body}</div>;
+}
+
+/** Backup, restore, and reset for the localStorage-based progress. */
+function DataControls() {
+  const { resetProgress } = useStudy();
+  const fileRef = useRef(null);
+
+  const exportData = () => {
+    const payload = {
+      app: "kanjipath",
+      exportedAt: new Date().toISOString(),
+      progress: JSON.parse(localStorage.getItem("kanjipath-progress") || "{}"),
+      theme: localStorage.getItem("kanjipath-theme") || null,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `kanjipath-backup-${localDateKey()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const importData = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (!parsed?.progress || !Array.isArray(parsed.progress.learned)) {
+          alert("That file doesn't look like a KanjiPath backup.");
+          return;
+        }
+        localStorage.setItem("kanjipath-progress", JSON.stringify(parsed.progress));
+        if (parsed.theme) localStorage.setItem("kanjipath-theme", parsed.theme);
+        window.location.reload();
+      } catch {
+        alert("Couldn't read that file — is it a KanjiPath backup?");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const reset = () => {
+    if (window.confirm("Reset ALL progress (learned kanji, reviews, test history)? This cannot be undone.")) {
+      resetProgress();
+    }
+  };
+
+  return (
+    <section>
+      <h2 className="section-label">Your data</h2>
+      <div className="card mt-3 flex flex-wrap items-center gap-3 px-5 py-4">
+        <p className="mr-auto text-sm text-stone-500 dark:text-night-mute">
+          Progress lives in this browser — keep a backup.
+        </p>
+        <button onClick={exportData} className="btn-soft">
+          Export
+        </button>
+        <button onClick={() => fileRef.current?.click()} className="btn-soft">
+          Import
+        </button>
+        <input ref={fileRef} type="file" accept=".json,application/json" onChange={importData} className="hidden" />
+        <button
+          onClick={reset}
+          className="rounded-full px-5 py-2 text-sm font-bold text-rose-600 transition-all duration-200 hover:bg-rose-50 active:scale-[0.96] dark:text-rose-400 dark:hover:bg-rose-950/40"
+        >
+          Reset
+        </button>
+      </div>
+    </section>
   );
 }
 
 export default function Dashboard() {
-  const { level, setLevel, learnedSet, quizzes } = useStudy();
+  const { level, setLevel, learnedSet, quizzes, srs, activity } = useStudy();
 
-  const totalAnswered = quizzes.reduce((sum, q) => sum + q.total, 0);
-  const totalCorrect = quizzes.reduce((sum, q) => sum + q.correct, 0);
-  const accuracy = totalAnswered ? Math.round((totalCorrect / totalAnswered) * 100) : null;
   const recent = [...quizzes].slice(-5).reverse();
+  // Recent accuracy is more actionable than a lifetime average.
+  const last10 = quizzes.slice(-10);
+  const answered10 = last10.reduce((sum, q) => sum + q.total, 0);
+  const accuracy = answered10
+    ? Math.round((last10.reduce((sum, q) => sum + q.correct, 0) / answered10) * 100)
+    : null;
   const activeAccent = ACCENTS[LEVELS[level].accent];
+
+  const dueCount = useMemo(() => {
+    const now = Date.now();
+    const kanjiDue = LEVELS[level].kanji.filter((k) => {
+      const e = srs["k:" + k.char];
+      return e && e.due <= now;
+    }).length;
+    const vocabDue = vocabPoolForLevel(level).filter((w) => {
+      const e = srs["v:" + w.jp];
+      return e && e.due <= now;
+    }).length;
+    return kanjiDue + vocabDue;
+  }, [srs, level]);
+
+  const streak = computeStreak(activity);
+  const today = activity[localDateKey()] || 0;
 
   return (
     <div className="rise-in space-y-10">
@@ -63,12 +167,21 @@ export default function Dashboard() {
           then test yourself.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            to="/learn"
-            className={`btn-grad px-6 py-2.5 ${activeAccent.grad} ${activeAccent.gradHover}`}
-          >
-            Continue learning →
-          </Link>
+          {dueCount > 0 ? (
+            <Link
+              to="/flashcards?deck=due"
+              className={`btn-grad px-6 py-2.5 ${activeAccent.grad} ${activeAccent.gradHover}`}
+            >
+              Review {dueCount} due card{dueCount === 1 ? "" : "s"} →
+            </Link>
+          ) : (
+            <Link
+              to="/learn"
+              className={`btn-grad px-6 py-2.5 ${activeAccent.grad} ${activeAccent.gradHover}`}
+            >
+              Continue learning →
+            </Link>
+          )}
           <Link to="/test" className="btn-soft px-6 py-2.5">
             Take a test
           </Link>
@@ -121,10 +234,27 @@ export default function Dashboard() {
       </section>
 
       {/* Stats */}
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat value={learnedSet.size} label="kanji learned" emoji="🈷️" tint="bg-emerald-50 dark:bg-emerald-950/40" />
-        <Stat value={quizzes.length} label="tests taken" emoji="📝" tint="bg-sky-50 dark:bg-sky-950/40" />
-        <Stat value={accuracy === null ? "—" : `${accuracy}%`} label="test accuracy" emoji="🎯" tint="bg-amber-50 dark:bg-amber-950/30" />
+        <Stat
+          value={dueCount}
+          label={dueCount === 1 ? "review due" : "reviews due"}
+          emoji="🔥"
+          tint="bg-rose-50 dark:bg-rose-950/30"
+          to="/flashcards?deck=due"
+        />
+        <Stat
+          value={streak}
+          label={`day streak · ${today} today`}
+          emoji="⚡"
+          tint="bg-amber-50 dark:bg-amber-950/30"
+        />
+        <Stat
+          value={accuracy === null ? "—" : `${accuracy}%`}
+          label="recent accuracy"
+          emoji="🎯"
+          tint="bg-sky-50 dark:bg-sky-950/40"
+        />
       </section>
 
       {/* Study modes */}
@@ -168,7 +298,7 @@ export default function Dashboard() {
                 <li key={i} className="flex items-center justify-between px-5 py-3 text-sm">
                   <span className="flex items-center gap-2.5 font-semibold">
                     <span className={`h-2 w-2 rounded-full ${dot}`} aria-hidden />
-                    {quiz.level} {quiz.kind === "vocab" ? "Vocab" : "Kanji"} ·{" "}
+                    {quiz.level} {KIND_LABELS[quiz.kind] ?? "Kanji"} ·{" "}
                     {formatDate(quiz.date)}
                   </span>
                   <span className={`font-bold [font-variant-numeric:tabular-nums] ${tone}`}>
@@ -180,6 +310,8 @@ export default function Dashboard() {
           </ul>
         </section>
       )}
+
+      <DataControls />
     </div>
   );
 }

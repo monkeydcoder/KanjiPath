@@ -3,6 +3,7 @@ import { useStudy } from "../context/StudyContext";
 import { ACCENTS } from "../utils";
 import Furigana from "../components/Furigana";
 import EmptyState from "../components/EmptyState";
+import SpeakButton from "../components/SpeakButton";
 
 function SentenceCard({ kanji, showFurigana, accent }) {
   const [revealed, setRevealed] = useState(false);
@@ -27,18 +28,21 @@ function SentenceCard({ kanji, showFurigana, accent }) {
             {kanji.meaning}
           </span>
         </span>
-        <button
-          onClick={() => setRevealed((r) => !r)}
-          className="flex items-center gap-1 rounded-full px-2 py-1 text-sm font-bold text-stone-400 transition-colors duration-200 hover:text-stone-600 dark:text-night-mute dark:hover:text-stone-300"
-        >
-          {revealed ? "Hide" : "Translate"}
-          <span
-            aria-hidden
-            className={`inline-block transition-transform duration-200 ${revealed ? "rotate-180" : ""}`}
+        <span className="flex items-center gap-1">
+          <SpeakButton text={kanji.sentence.parts.map(([t, r]) => r || t).join("")} />
+          <button
+            onClick={() => setRevealed((r) => !r)}
+            className="flex items-center gap-1 rounded-full px-2 py-1 text-sm font-bold text-stone-400 transition-colors duration-200 hover:text-stone-600 dark:text-night-mute dark:hover:text-stone-300"
           >
-            ⌄
-          </span>
-        </button>
+            {revealed ? "Hide" : "Translate"}
+            <span
+              aria-hidden
+              className={`inline-block transition-transform duration-200 ${revealed ? "rotate-180" : ""}`}
+            >
+              ⌄
+            </span>
+          </button>
+        </span>
       </div>
     </div>
   );

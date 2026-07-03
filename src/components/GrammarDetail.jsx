@@ -1,11 +1,15 @@
 import { TOPIC_BY_ID } from "../data/grammar";
 import { ACCENTS } from "../utils";
 import PriorityStars from "./PriorityStars";
+import SpeakButton from "./SpeakButton";
 
 function Example({ ex }) {
   return (
     <li className="rounded-2xl border-l-4 border-emerald-400/70 bg-stone-100/70 px-4 py-3 dark:border-emerald-500/50 dark:bg-night-soft">
-      <p className="font-jp text-lg font-bold leading-relaxed">{ex.jp}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="font-jp text-lg font-bold leading-relaxed">{ex.jp}</p>
+        <SpeakButton text={ex.jp} />
+      </div>
       <p className="mt-0.5 text-sm italic text-stone-500 dark:text-night-mute">{ex.romaji}</p>
       <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">{ex.en}</p>
     </li>

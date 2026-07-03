@@ -22,10 +22,17 @@ To create a production build: `npm run build` (output in `dist/`, previewable wi
 - **Learn** — browse all kanji of a level, search by character/meaning/reading,
   filter by learned status, and open a full detail card. Mark kanji as learned.
 - **Revise** — step through your learned kanji one at a time (arrow keys work).
-- **Test** — mixed multiple-choice quiz (meaning, reading, and kanji recognition)
-  with instant feedback and a short explanation after every question.
-- **Flashcards** — flip cards with an "Again / Got it" loop; missed cards return
-  to the back of the deck until you know them.
+- **Test** — kanji, vocabulary, and grammar quizzes with JLPT-style same-type
+  options, sentence-cloze questions, shuffled question types, instant
+  explanations, and a "retry missed" loop. Wrong answers feed the review deck.
+- **Flashcards + spaced repetition** — kanji and vocabulary decks in both
+  directions (JP→EN, EN→JP). "Got it / Again" moves cards up and down a
+  5-box Leitner ladder (1→16-day intervals); the "Due review" deck and the
+  dashboard's due counter tell you exactly what to study today.
+- **Audio** — 🔊 buttons speak words, readings, and sentences with the
+  browser's built-in Japanese voice.
+- **Streak & backup** — daily study streak on the dashboard, plus
+  export/import/reset of all progress.
 - **Sentence practice** — read every kanji in a real sentence with toggleable
   furigana and tap-to-reveal translations.
 - **Vocabulary** — essential N5 & N4 words grouped by topic, with a practice mode

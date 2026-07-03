@@ -49,3 +49,27 @@ export function formatDate(iso) {
     day: "numeric",
   });
 }
+
+/** Local-timezone YYYY-MM-DD key, used for daily activity tracking. */
+export function localDateKey(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
+}
+
+/**
+ * Consecutive study days ending today (or yesterday, so an unfinished
+ * today doesn't zero the streak).
+ */
+export function computeStreak(activity) {
+  const DAY = 86400000;
+  let t = new Date();
+  t.setHours(0, 0, 0, 0);
+  if (!activity[localDateKey(t)]) t = new Date(t.getTime() - DAY);
+  let streak = 0;
+  while (activity[localDateKey(t)]) {
+    streak++;
+    t = new Date(t.getTime() - DAY);
+  }
+  return streak;
+}
