@@ -5,7 +5,7 @@ A clean, beginner-friendly web app for learning **JLPT N5 and N4 Japanese** — 
 example sentences, spaced repetition, quizzes, and audio pronunciation.
 
 <p align="center">
-  <img src="preview.gif" alt="KanjiPath walkthrough – Dashboard, Learn, Kanji detail, Vocabulary, Grammar, Test, Flashcards, Sentences" width="720" />
+  <img src="preview.gif?v=2" alt="KanjiPath walkthrough – Dashboard, Learn, Kanji detail, Vocabulary, Grammar, Test, Flashcards, Sentences" width="720" />
 </p>
 
 ## Getting started
