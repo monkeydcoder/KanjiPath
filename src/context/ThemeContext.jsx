@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 const ThemeContext = createContext(null);
 
-const STORAGE_KEY = "kanjipath-theme";
+export const THEME_STORAGE_KEY = "kanjipath-theme";
+const STORAGE_KEY = THEME_STORAGE_KEY;
 
 function initialTheme() {
   const saved = localStorage.getItem(STORAGE_KEY);

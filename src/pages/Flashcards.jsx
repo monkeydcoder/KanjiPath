@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useStudy } from "../context/StudyContext";
 import { vocabPoolForLevel } from "../data/vocab";
-import { ACCENTS, shuffle } from "../utils";
+import { ACCENTS, selectableCardClass, shuffle } from "../utils";
 import SpeakButton from "../components/SpeakButton";
 
 const DIRECTIONS = [
@@ -87,11 +87,7 @@ export default function Flashcards() {
               <button
                 key={d.id}
                 onClick={() => setDeckId(d.id)}
-                className={`rounded-2xl border px-3 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] ${
-                  deckId === d.id
-                    ? `${accent.border} ${accent.soft} ${accent.softText} ring-1 ${accent.ring}`
-                    : "border-line text-stone-600 hover:border-stone-400 dark:border-night-line dark:text-stone-300 dark:hover:border-night-mute"
-                }`}
+                className={`rounded-2xl border px-3 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] ${selectableCardClass(accent, deckId === d.id)}`}
               >
                 {d.label}
                 <span className="block text-xs font-normal opacity-70 [font-variant-numeric:tabular-nums]">
@@ -107,11 +103,7 @@ export default function Flashcards() {
               <button
                 key={d.id}
                 onClick={() => setDirection(d.id)}
-                className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] ${
-                  direction === d.id
-                    ? `${accent.border} ${accent.soft} ${accent.softText} ring-1 ${accent.ring}`
-                    : "border-line text-stone-600 hover:border-stone-400 dark:border-night-line dark:text-stone-300 dark:hover:border-night-mute"
-                }`}
+                className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] ${selectableCardClass(accent, direction === d.id)}`}
               >
                 {d.label}
                 <span className="block text-xs font-normal opacity-70">{d.desc}</span>

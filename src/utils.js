@@ -30,6 +30,20 @@ export const ACCENTS = {
   },
 };
 
+const SELECTABLE_CARD_IDLE =
+  "border-line text-stone-600 hover:border-stone-400 dark:border-night-line dark:text-stone-300 dark:hover:border-night-mute";
+
+/**
+ * Class string for the "bordered card" selection pattern shared by the Test
+ * and Flashcards setup screens (mode/deck/count/direction pickers): an
+ * accent-tinted border + ring when selected, a neutral border otherwise.
+ */
+export function selectableCardClass(accent, active) {
+  return active
+    ? `${accent.border} ${accent.soft} ${accent.softText} ring-1 ${accent.ring}`
+    : SELECTABLE_CARD_IDLE;
+}
+
 export function shuffle(array) {
   const a = [...array];
   for (let i = a.length - 1; i > 0; i--) {

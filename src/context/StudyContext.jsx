@@ -4,7 +4,8 @@ import { localDateKey } from "../utils";
 
 const StudyContext = createContext(null);
 
-const STORAGE_KEY = "kanjipath-progress";
+export const PROGRESS_STORAGE_KEY = "kanjipath-progress";
+const STORAGE_KEY = PROGRESS_STORAGE_KEY;
 
 // Bumped whenever the persisted shape changes, so a future migration can
 // tell old data apart from current. For now there's only one shape, so

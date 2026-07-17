@@ -1,6 +1,7 @@
 import { useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
-import { sanitizeProgress, useStudy } from "../context/StudyContext";
+import { PROGRESS_STORAGE_KEY, sanitizeProgress, useStudy } from "../context/StudyContext";
+import { THEME_STORAGE_KEY } from "../context/ThemeContext";
 import { LEVELS, LEVEL_IDS } from "../data";
 import { vocabPoolForLevel } from "../data/vocab";
 import { ACCENTS, computeStreak, formatDate, localDateKey } from "../utils";
@@ -55,8 +56,8 @@ function DataControls() {
     const payload = {
       app: "kanjipath",
       exportedAt: new Date().toISOString(),
-      progress: JSON.parse(localStorage.getItem("kanjipath-progress") || "{}"),
-      theme: localStorage.getItem("kanjipath-theme") || null,
+      progress: JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) || "{}"),
+      theme: localStorage.getItem(THEME_STORAGE_KEY) || null,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
@@ -85,9 +86,9 @@ function DataControls() {
         // sanitizeProgress re-validates every field and entry — the same
         // scrutiny loadProgress() applies to localStorage — since this JSON
         // came from a file the user picked off disk, not from the app itself.
-        localStorage.setItem("kanjipath-progress", JSON.stringify(sanitizeProgress(parsed.progress)));
+        localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(sanitizeProgress(parsed.progress)));
         if (parsed.theme === "light" || parsed.theme === "dark") {
-          localStorage.setItem("kanjipath-theme", parsed.theme);
+          localStorage.setItem(THEME_STORAGE_KEY, parsed.theme);
         }
         window.location.reload();
       } catch {

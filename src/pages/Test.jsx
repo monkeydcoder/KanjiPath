@@ -4,7 +4,7 @@ import { LEVELS } from "../data";
 import { vocabPoolForLevel } from "../data/vocab";
 import { grammarForLevel } from "../data/grammar";
 import { onyomiRomaji } from "../romaji";
-import { ACCENTS, sample, shuffle } from "../utils";
+import { ACCENTS, sample, selectableCardClass, shuffle } from "../utils";
 
 // Vocabulary is quicker to recall than kanji, so its tests run longer.
 const KANJI_COUNTS = [5, 10, 15];
@@ -30,9 +30,6 @@ const OPTION_CORRECT =
 const OPTION_WRONG =
   "border-rose-400 bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300";
 const OPTION_DIMMED = "border-line bg-card opacity-40 dark:border-night-line dark:bg-night-card";
-
-const CHOICE_IDLE =
-  "border-line text-stone-600 hover:border-stone-400 dark:border-night-line dark:text-stone-300 dark:hover:border-night-mute";
 
 function mainReading(kanji) {
   return kanji.kun || kanji.on;
@@ -87,6 +84,11 @@ function pickDistractors(pool, n, { getValue, correct, getGroup, group }) {
   return out;
 }
 
+/** Shuffled multiple-choice options: the correct answer plus 3 distractors. */
+function buildOptions(correct, pool, group, getValue, getGroup) {
+  return shuffle([correct, ...pickDistractors(pool, 3, { getValue, correct, getGroup, group })]);
+}
+
 /** Build a mixed kanji quiz from `items`, with distractors from `allKanji`. */
 function buildKanjiQuestions(items, allKanji, count) {
   const picked = sample(items, count);
@@ -110,10 +112,7 @@ function buildKanjiQuestions(items, allKanji, count) {
         glyphKind: "kanji",
         correct: kanji.meaning,
         optionsKind: "en",
-        options: shuffle([
-          kanji.meaning,
-          ...pickDistractors(rest, 3, { getValue: (k) => k.meaning, correct: kanji.meaning, getGroup: kanjiPos, group }),
-        ]),
+        options: buildOptions(kanji.meaning, rest, group, (k) => k.meaning, kanjiPos),
       };
     }
     if (type === "reading") {
@@ -125,10 +124,7 @@ function buildKanjiQuestions(items, allKanji, count) {
         glyphKind: "kanji",
         correct,
         optionsKind: "jp",
-        options: shuffle([
-          correct,
-          ...pickDistractors(rest, 3, { getValue: mainReading, correct, getGroup: kanjiPos, group }),
-        ]),
+        options: buildOptions(correct, rest, group, mainReading, kanjiPos),
       };
     }
     if (type === "cloze") {
@@ -140,10 +136,7 @@ function buildKanjiQuestions(items, allKanji, count) {
         hint: kanji.sentence.en,
         correct: kanji.char,
         optionsKind: "glyph",
-        options: shuffle([
-          kanji.char,
-          ...pickDistractors(rest, 3, { getValue: (k) => k.char, correct: kanji.char, getGroup: kanjiPos, group }),
-        ]),
+        options: buildOptions(kanji.char, rest, group, (k) => k.char, kanjiPos),
       };
     }
     return {
@@ -152,10 +145,7 @@ function buildKanjiQuestions(items, allKanji, count) {
       glyph: null,
       correct: kanji.char,
       optionsKind: "glyph",
-      options: shuffle([
-        kanji.char,
-        ...pickDistractors(rest, 3, { getValue: (k) => k.char, correct: kanji.char, getGroup: kanjiPos, group }),
-      ]),
+      options: buildOptions(kanji.char, rest, group, (k) => k.char, kanjiPos),
     };
   });
 }
@@ -188,10 +178,7 @@ function buildVocabQuestions(items, pool, count) {
         glyphKind: "jp",
         correct: word.en,
         optionsKind: "en",
-        options: shuffle([
-          word.en,
-          ...pickDistractors(rest, 3, { getValue: (w) => w.en, correct: word.en, getGroup: byTopic, group }),
-        ]),
+        options: buildOptions(word.en, rest, group, (w) => w.en, byTopic),
       };
     }
     if (type === "reading") {
@@ -202,15 +189,7 @@ function buildVocabQuestions(items, pool, count) {
         glyphKind: "jp",
         correct: word.r,
         optionsKind: "jp",
-        options: shuffle([
-          word.r,
-          ...pickDistractors(rest.filter((w) => w.r !== w.jp), 3, {
-            getValue: (w) => w.r,
-            correct: word.r,
-            getGroup: byTopic,
-            group,
-          }),
-        ]),
+        options: buildOptions(word.r, rest.filter((w) => w.r !== w.jp), group, (w) => w.r, byTopic),
       };
     }
     return {
@@ -219,10 +198,7 @@ function buildVocabQuestions(items, pool, count) {
       glyph: null,
       correct: word.jp,
       optionsKind: "jp",
-      options: shuffle([
-        word.jp,
-        ...pickDistractors(rest, 3, { getValue: (w) => w.jp, correct: word.jp, getGroup: byTopic, group }),
-      ]),
+      options: buildOptions(word.jp, rest, group, (w) => w.jp, byTopic),
     };
   });
 }
@@ -246,10 +222,7 @@ function buildGrammarQuestions(items, all, count) {
         glyphKind: "jp",
         correct: label,
         optionsKind: "en",
-        options: shuffle([
-          label,
-          ...pickDistractors(rest, 3, { getValue: grammarLabel, correct: label, getGroup: byTopic, group }),
-        ]),
+        options: buildOptions(label, rest, group, grammarLabel, byTopic),
       };
     }
     return {
@@ -258,10 +231,7 @@ function buildGrammarQuestions(items, all, count) {
       glyph: null,
       correct: lesson.jp,
       optionsKind: "jp",
-      options: shuffle([
-        lesson.jp,
-        ...pickDistractors(rest, 3, { getValue: (g) => g.jp, correct: lesson.jp, getGroup: byTopic, group }),
-      ]),
+      options: buildOptions(lesson.jp, rest, group, (g) => g.jp, byTopic),
     };
   });
 }
@@ -477,11 +447,7 @@ export default function Test() {
               <button
                 key={m.id}
                 onClick={() => selectMode(m.id)}
-                className={`rounded-2xl border px-3 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] ${
-                  mode === m.id
-                    ? `${accent.border} ${accent.soft} ${accent.softText} ring-1 ${accent.ring}`
-                    : CHOICE_IDLE
-                }`}
+                className={`rounded-2xl border px-3 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] ${selectableCardClass(accent, mode === m.id)}`}
               >
                 {m.emoji} {m.label}
                 <span className="block text-xs font-normal opacity-70 [font-variant-numeric:tabular-nums]">
@@ -501,22 +467,14 @@ export default function Test() {
               <div className="mt-2 flex gap-2">
                 <button
                   onClick={() => setPool("all")}
-                  className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] ${
-                    pool === "all"
-                      ? `${accent.border} ${accent.soft} ${accent.softText} ring-1 ${accent.ring}`
-                      : CHOICE_IDLE
-                  }`}
+                  className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] ${selectableCardClass(accent, pool === "all")}`}
                 >
                   All {levelData.kanji.length} kanji
                 </button>
                 <button
                   onClick={() => canUseLearned && setPool("learned")}
                   disabled={!canUseLearned}
-                  className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] disabled:opacity-40 ${
-                    pool === "learned"
-                      ? `${accent.border} ${accent.soft} ${accent.softText} ring-1 ${accent.ring}`
-                      : CHOICE_IDLE
-                  }`}
+                  className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] disabled:opacity-40 ${selectableCardClass(accent, pool === "learned")}`}
                 >
                   Learned only ({learnedKanji.length})
                 </button>
@@ -535,11 +493,7 @@ export default function Test() {
               <button
                 key={n}
                 onClick={() => setCount(n)}
-                className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] ${
-                  count === n
-                    ? `${accent.border} ${accent.soft} ${accent.softText} ring-1 ${accent.ring}`
-                    : CHOICE_IDLE
-                }`}
+                className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98] ${selectableCardClass(accent, count === n)}`}
               >
                 {n}
               </button>
