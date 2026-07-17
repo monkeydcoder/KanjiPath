@@ -31,21 +31,21 @@ const OPTION_WRONG =
   "border-rose-400 bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300";
 const OPTION_DIMMED = "border-line bg-card opacity-40 dark:border-night-line dark:bg-night-card";
 
-function mainReading(kanji) {
+export function mainReading(kanji) {
   return kanji.kun || kanji.on;
 }
 
 // Coarse part of speech for a kanji, used to keep distractors the same type
 // (verbs with verbs, adjectives with adjectives) instead of trivially
 // eliminable. Verbs read "to …"; i-adjectives show okurigana like "(い)".
-function kanjiPos(kanji) {
+export function kanjiPos(kanji) {
   if (/^to\s/i.test(kanji.meaning.trim())) return "verb";
   if (kanji.kun.includes("い)")) return "adj";
   return "noun";
 }
 
 /** Short English label for a grammar pattern ("は — Topic marker" → "Topic marker"). */
-function grammarLabel(lesson) {
+export function grammarLabel(lesson) {
   return lesson.title.includes("—")
     ? lesson.title.split("—").pop().trim()
     : lesson.short;
@@ -56,7 +56,7 @@ function grammarLabel(lesson) {
  * equally often, in a shuffled order (the old fixed rotation let you
  * anticipate what each question would ask).
  */
-function typeSequence(types, count) {
+export function typeSequence(types, count) {
   return shuffle(Array.from({ length: count }, (_, i) => types[i % types.length]));
 }
 
@@ -67,7 +67,7 @@ function typeSequence(types, count) {
  * to the rest of the pool only if a group is too small. All returned values are
  * distinct and never equal the correct answer.
  */
-function pickDistractors(pool, n, { getValue, correct, getGroup, group }) {
+export function pickDistractors(pool, n, { getValue, correct, getGroup, group }) {
   const seen = new Set([correct]);
   const out = [];
   const take = (items) => {
@@ -85,12 +85,12 @@ function pickDistractors(pool, n, { getValue, correct, getGroup, group }) {
 }
 
 /** Shuffled multiple-choice options: the correct answer plus 3 distractors. */
-function buildOptions(correct, pool, group, getValue, getGroup) {
+export function buildOptions(correct, pool, group, getValue, getGroup) {
   return shuffle([correct, ...pickDistractors(pool, 3, { getValue, correct, getGroup, group })]);
 }
 
 /** Build a mixed kanji quiz from `items`, with distractors from `allKanji`. */
-function buildKanjiQuestions(items, allKanji, count) {
+export function buildKanjiQuestions(items, allKanji, count) {
   const picked = sample(items, count);
   const seq = typeSequence(["meaning", "reading", "kanji", "cloze"], picked.length);
   return picked.map((kanji, i) => {
@@ -151,7 +151,7 @@ function buildKanjiQuestions(items, allKanji, count) {
 }
 
 /** Build a mixed vocabulary quiz from `items`, with distractors from `pool`. */
-function buildVocabQuestions(items, pool, count) {
+export function buildVocabQuestions(items, pool, count) {
   const picked = sample(items, count);
   const seq = typeSequence(["meaning", "jp", "reading"], picked.length);
   return picked.map((word, i) => {
@@ -204,7 +204,7 @@ function buildVocabQuestions(items, pool, count) {
 }
 
 /** Build a grammar quiz from `items`, with distractors from `all`. */
-function buildGrammarQuestions(items, all, count) {
+export function buildGrammarQuestions(items, all, count) {
   const picked = sample(items, count);
   const seq = typeSequence(["meaning", "pattern"], picked.length);
   return picked.map((lesson, i) => {

@@ -21,15 +21,15 @@ const MAX_ACTIVITY_DAYS = 120;
 const MAX_QUIZZES = 50;
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-function promoted(entry) {
+export function promoted(entry) {
   const box = Math.min((entry?.box ?? 0) + 1, 5);
   return { box, due: Date.now() + SRS_INTERVALS_DAYS[box - 1] * DAY_MS };
 }
 
-const demoted = () => ({ box: 1, due: Date.now() });
+export const demoted = () => ({ box: 1, due: Date.now() });
 
 /** Daily activity counter (for the streak), pruned to the last 120 days. */
-function bumped(activity) {
+export function bumped(activity) {
   const key = localDateKey();
   const next = { ...activity, [key]: (activity[key] || 0) + 1 };
   const keys = Object.keys(next);
@@ -40,7 +40,7 @@ function bumped(activity) {
   return next;
 }
 
-function defaultProgress() {
+export function defaultProgress() {
   return { version: PROGRESS_VERSION, level: "N5", learned: [], quizzes: [], srs: {}, activity: {} };
 }
 
