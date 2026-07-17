@@ -1,10 +1,14 @@
 import { useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
-import { useStudy } from "../context/StudyContext";
+import { sanitizeProgress, useStudy } from "../context/StudyContext";
 import { LEVELS, LEVEL_IDS } from "../data";
 import { vocabPoolForLevel } from "../data/vocab";
 import { ACCENTS, computeStreak, formatDate, localDateKey } from "../utils";
 import ProgressBar from "../components/ProgressBar";
+
+// A legitimate backup is a few KB of JSON; this is a generous ceiling that
+// still rejects someone dragging in an unrelated multi-MB file by mistake.
+const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 
 const MODES = [
   { to: "/learn", emoji: "📖", title: "Learn", desc: "Browse kanji with readings, words and sentences", tint: "bg-emerald-50 dark:bg-emerald-950/40" },
@@ -65,16 +69,26 @@ function DataControls() {
   const importData = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_IMPORT_BYTES) {
+      alert("That file is too large to be a KanjiPath backup.");
+      e.target.value = "";
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const parsed = JSON.parse(reader.result);
-        if (!parsed?.progress || !Array.isArray(parsed.progress.learned)) {
+        if (!parsed?.progress || typeof parsed.progress !== "object") {
           alert("That file doesn't look like a KanjiPath backup.");
           return;
         }
-        localStorage.setItem("kanjipath-progress", JSON.stringify(parsed.progress));
-        if (parsed.theme) localStorage.setItem("kanjipath-theme", parsed.theme);
+        // sanitizeProgress re-validates every field and entry — the same
+        // scrutiny loadProgress() applies to localStorage — since this JSON
+        // came from a file the user picked off disk, not from the app itself.
+        localStorage.setItem("kanjipath-progress", JSON.stringify(sanitizeProgress(parsed.progress)));
+        if (parsed.theme === "light" || parsed.theme === "dark") {
+          localStorage.setItem("kanjipath-theme", parsed.theme);
+        }
         window.location.reload();
       } catch {
         alert("Couldn't read that file — is it a KanjiPath backup?");
